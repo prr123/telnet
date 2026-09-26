@@ -137,7 +137,18 @@ func (s *ClientSession) HandleSession() {
 	s.SendNegotiation(TelDO, TelNAWS)
 	s.SendNegotiation(TelDONT, TelECHO)
 
-	s.WriteString("Welcome! Resize your terminal to test NAWS.\r\n> ")
+	s.WriteString("Welcome! Resize your terminal to test NAWS.\r\n ")
+
+	// read the prompt
+	out := make([]byte,1024)
+		n, err := s.spty.Read(out)
+		if err != nil {log.Fatalf("error handle Cmd Read: %v\n", err)}
+//		if dbg {log.Printf("  handle Cmd %d: %s %v\n", n, out[:n], out[:n])}
+		if dbg {log.Printf("  handle Resp %d: %s\n%v\n", n, out[:n] , out[:n])}
+		s.conn.Write(out[:n])
+
+	_, err = s.spty.Write([]byte("\n"))
+	if err != nil {log.Fatalf("error writing NL to pty\n")}
 
 	reader := bufio.NewReader(s.conn)
 	for {
@@ -190,7 +201,7 @@ func (s *ClientSession) processProtocolByte(b byte) {
 
 		default: 
 			s.conn.Write([]byte{b}) // Echo
-			s.conn.Write([]byte{':'}) // Echo
+//			s.conn.Write([]byte{':'}) // Echo
 			s.inputBuffer.WriteByte(b)
 		}
 
