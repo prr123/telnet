@@ -215,6 +215,7 @@ func (s *ClientSession) processProtocolByte(b byte) {
 
 	st := int(s.protocolState)
 	if dbg {log.Printf("Proc Prot State: %s %d\n", States[st], b)}
+
 	switch s.protocolState {
 	case StateNormal:
 		switch b {
@@ -224,10 +225,15 @@ func (s *ClientSession) processProtocolByte(b byte) {
 		case '\r','\n': 
 			line := s.inputBuffer.String()
 //dbg
-		if dbg {log.Printf("line [%d]: %s\n", len(line), line)}
+			if dbg {log.Printf("line [%d]: %s\n", len(line), line)}
 
 			s.inputBuffer.Reset()
-			s.handleCommand(line)
+
+			if s.currentCmd != 0 {
+				s.currentCmd = 0
+			} else {
+				s.handleCommand(line)
+			}
 
 		default: 
 			s.conn.Write([]byte{b}) // Echo
